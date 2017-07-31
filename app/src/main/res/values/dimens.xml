@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="layout_marginBottom">5dp</dimen>
+    <dimen name="titleTextSize">20sp</dimen>
+    <dimen name="authorTextSize">18sp</dimen>
+    <dimen name="publishedAtTextSize">16sp</dimen>
+    <dimen name="descriptionTextSize">17sp</dimen>
+
+
+</resources>
