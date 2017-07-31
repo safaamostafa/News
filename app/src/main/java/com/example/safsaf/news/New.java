@@ -29,15 +29,15 @@ public class New {
     /**
      * Constructs a new {@link New} object.
      *
-     * @param sectionName  is the section of the new
+     * @param sectionName        is the section of the new
      * @param webPublicationDate is the PublicationDate of the new
-     * @param webTitle is the title of the new
-     * @param url  is the website URL to find more details about the new
+     * @param webTitle           is the title of the new
+     * @param url                is the website URL to find more details about the new
      */
-    public New(String sectionName , String webPublicationDate, String webTitle, String url) {
+    public New(String sectionName, String webPublicationDate, String webTitle, String url) {
         mSectionName = sectionName;
         mWebPublicationDate = webPublicationDate;
-        mWebTitle=webTitle;
+        mWebTitle = webTitle;
         mUrl = url;
     }
 
