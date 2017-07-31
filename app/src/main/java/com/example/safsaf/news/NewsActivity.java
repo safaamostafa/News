@@ -2,20 +2,17 @@ package com.example.safsaf.news;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-public class NewsActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<New>> {
+public class NewsActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = NewsActivity.class.getName();
 
@@ -24,14 +21,6 @@ public class NewsActivity extends AppCompatActivity implements LoaderManager.Loa
      */
     private static final String GuardianApis_REQUEST_URL =
             "https://content.guardianapis.com/search?api-key=2eba40b9-74f4-4e2c-b54e-f1254228dfd0";
-
-    /**
-          * Constant value for the new loader ID. We can choose any integer.
-          * This really only comes into play if you're using multiple loaders.
-          */
-    private static final int NEW_LOADER_ID = 1;
-    /** TextView that is displayed when the list is empty */
-    private TextView mEmptyStateTextView;
 
     /**
      * Adapter for the list of news
@@ -47,8 +36,6 @@ public class NewsActivity extends AppCompatActivity implements LoaderManager.Loa
 
         // Find a reference to the {@link ListView} in the layout
         ListView newListView = (ListView) findViewById(R.id.list);
-        mEmptyStateTextView = (TextView) findViewById(R.id.empty_view);
-                newListView.setEmptyView(mEmptyStateTextView);
 
         // Create a new adapter that takes an empty list of news as input
         mAdapter = new NewAdapter(this, new ArrayList<New>());
@@ -76,52 +63,62 @@ public class NewsActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-
-
-
-        // Get a reference to the LoaderManager, in order to interact with loaders.
-        LoaderManager loaderManager = getSupportLoaderManager();
-        // Initialize the loader. Pass in the int ID constant defined above and pass in null for
-        // the bundle. Pass in this activity for the LoaderCallbacks parameter (which is valid
-        // because this activity implements the LoaderCallbacks interface).
-        loaderManager.initLoader(NEW_LOADER_ID, null, this);
-
-
-
-
-
+        // Start the AsyncTask to fetch the new data
+        NewAsyncTask task = new NewAsyncTask();
+        task.execute(GuardianApis_REQUEST_URL);
     }
 
-    @Override
-    public Loader<List<New>> onCreateLoader(int i, Bundle bundle) {
-                // Create a new loader for the given URL
-        return new NewLoader(this,GuardianApis_REQUEST_URL);
+
+    /**
+     * {@link AsyncTask} to perform the network request on a background thread, and then
+     * update the UI with the list of news in the response.
+     * <p>
+     * AsyncTask has three generic parameters: the input type, a type used for progress updates, and
+     * an output type. Our task will take a String URL, and return a New. We won't do
+     * progress updates, so the second generic is just Void.
+     * <p>
+     * We'll only override two of the methods of AsyncTask: doInBackground() and onPostExecute().
+     * The doInBackground() method runs on a background thread, so it can run long-running code
+     * (like network activity), without interfering with the responsiveness of the app.
+     * Then onPostExecute() is passed the result of doInBackground() method, but runs on the
+     * UI thread, so it can use the produced data to update the UI.
+     */
+    private class NewAsyncTask extends AsyncTask<String, Void, List<New>> {
+
+        /**
+         * This method runs on a background thread and performs the network request.
+         * We should not update the UI from a background thread, so we return a list of
+         * {@link New}s as the result.
+         */
+        @Override
+        protected List<New> doInBackground(String... urls) {
+            // Don't perform the request if there are no URLs, or the first URL is null
+            if (urls.length < 1 || urls[0] == null) {
+                return null;
             }
 
-    @Override
-   public void onLoadFinished(Loader<List<New>> loader, List<New> news) {
-
-        // Set empty state text to display "No earthquakes found."
-                mEmptyStateTextView.setText(R.string.no_News);
-        // Clear the adapter of previous earthquake data
-        mAdapter.clear();
-        // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
-        // data set. This will trigger the ListView to update.
-        if (news != null && !news.isEmpty()) {
-                        mAdapter.addAll(news);
+            List<New> result = QueryUtils.fetchNewData(urls[0]);
+            return result;
         }
+
+        /**
+         * This method runs on the main UI thread after the background work has been
+         * completed. This method receives as input, the return value from the doInBackground()
+         * method. First we clear out the adapter, to get rid of new data from a previous
+         * query to google. Then we update the adapter with the new list of news,
+         * which will trigger the ListView to re-populate its list items.
+         */
+        @Override
+        protected void onPostExecute(List<New> data) {
+            // Clear the adapter of previous new data
+            mAdapter.clear();
+
+            // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
+            // data set. This will trigger the ListView to update.
+            if (data != null && !data.isEmpty()) {
+                mAdapter.addAll(data);
             }
+        }
 
-    @Override
-    public void onLoaderReset(Loader<List<New>> loader) {
-// Loader reset, so we can clear out our existing data.
-                mAdapter.clear();
     }
-
-
-
-
-
-
-
 }
